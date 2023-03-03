@@ -1,0 +1,24 @@
+plugins{
+    id 'application'
+}
+
+application{
+    mainClass = "org.macmaxwell.pricing.Main"
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Main-Class': 'org.macmaxwell.pricing.Main'
+    }
+    from {
+        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+task printPricing(){
+    description 'This signals the Pricing Service has started building.'
+    doFirst(){
+        println("Pricing has started building")
+    }
+}

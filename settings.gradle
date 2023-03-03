@@ -1,0 +1,5 @@
+rootProject.name = 'nginxjetty'
+// Add the two other projects
+include "currency"
+include "pricing"
+

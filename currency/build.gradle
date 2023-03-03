@@ -1,0 +1,24 @@
+plugins{
+    id 'application'
+}
+
+application {
+     mainClass = 'org.macmaxwell.currency.Main'
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Main-Class': 'org.macmaxwell.currency.Main'
+    }
+    from {
+        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+task printCurrency(){
+    description 'This signals the Currency Service has started building.'
+    doFirst(){
+        println("Currency has started building")
+    }
+}
