@@ -6,6 +6,10 @@ application {
      mainClass = 'org.macmaxwell.currency.Main'
 }
 
+repositories {
+    mavenCentral()
+}
+
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {

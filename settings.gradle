@@ -3,3 +3,8 @@ rootProject.name = 'nginxjetty'
 include "currency"
 include "pricing"
 
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}

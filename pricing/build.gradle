@@ -1,5 +1,10 @@
 plugins{
     id 'application'
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
 }
 
 application{
@@ -15,6 +20,8 @@ jar {
         configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
+
+
 
 task printPricing(){
     description 'This signals the Pricing Service has started building.'

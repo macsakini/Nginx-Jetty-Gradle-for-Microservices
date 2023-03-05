@@ -1,97 +1,107 @@
 package org.macmaxwell.currency;
 
-import org.eclipse.jetty.http.*;
-import org.eclipse.jetty.http2.api.Stream;
-import org.eclipse.jetty.http2.frames.DataFrame;
-import org.eclipse.jetty.http2.frames.HeadersFrame;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.math.BigInteger;
+import java.util.Random;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.http2.api.server.ServerSessionListener;
-import org.eclipse.jetty.http2.server.RawHTTP2ServerConnectionFactory;
-import org.eclipse.jetty.util.Callback;
-
-import java.nio.ByteBuffer;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 
-public class Main {
+public class Main{
+
     public static void main(String[] args) throws Exception {
-        // Create a Server instance.
-        Server server = new Server();
+        int port = 8090;
+        Server server = new Server(port);
 
-        ServerSessionListener sessionListener = new ServerSessionListener.Adapter()
-        {
-            @Override
-            public Stream.Listener onNewStream(Stream stream, HeadersFrame frame)
-            {
-                // Send a response after reading the request.
-                MetaData.Request request = (MetaData.Request)frame.getMetaData();
-                if (frame.isEndStream())
-                {
-                    respond(stream, request);
-                    return null;
-                }
-                else
-                {
-                    return new Stream.Listener.Adapter()
-                    {
-                        @Override
-                        public void onData(Stream stream, DataFrame frame, Callback callback)
-                        {
-                            // Consume the request content.
-                            callback.succeeded();
-                            if (frame.isEndStream())
-                                respond(stream, request);
-                        }
-                    };
-                }
-            }
+        ServletContextHandler handler = new ServletContextHandler();
+        handler.setContextPath("/");
 
-            private void respond(Stream stream, MetaData.Request request)
-            {
-                // Prepare the response HEADERS frame.
+        ServletHolder servletHolder = new ServletHolder(new RSAEncryptServlet());
+        handler.addServlet(servletHolder, "/encrypt");
 
-                // The response HTTP status and HTTP headers.
-                MetaData.Response response = new MetaData.Response(HttpVersion.HTTP_2, HttpStatus.OK_200, HttpFields.EMPTY);
-
-                if (HttpMethod.GET.is(request.getMethod()))
-                {
-                    // The response content.
-//                    ByteBuffer resourceBytes = getResourceBytes(request);
-
-                    // Send the HEADERS frame with the response status and headers,
-                    // and a DATA frame with the response content bytes.
-//                    stream.headers(new HeadersFrame(stream.getId(), response, null, false))
-//                            .thenCompose(s -> s.data(new DataFrame(s.getId(), resourceBytes, true)));
-                    System.out.println("Hellow");
-//
-                }
-                else
-                {
-                    // Send just the HEADERS frame with the response status and headers.
-                    stream.headers(new HeadersFrame(stream.getId(), response, null, true));
-                }
-            }
-
-        };
-
-        // Create a ServerConnector with RawHTTP2ServerConnectionFactory.
-        RawHTTP2ServerConnectionFactory http2 = new RawHTTP2ServerConnectionFactory(sessionListener);
-
-        // Configure RawHTTP2ServerConnectionFactory, for example:
-        // Configure the max number of concurrent requests.
-        http2.setMaxConcurrentStreams(128);
-        // Enable support for CONNECT.
-        http2.setConnectProtocolEnabled(true);
-
-        // Create the ServerConnector.
-        ServerConnector connector = new ServerConnector(server, http2);
-
-        // Add the Connector to the Server
-        server.addConnector(connector);
-
-        // Start the Server so it starts accepting connections from clients.
+        server.setHandler(handler);
         server.start();
+        server.join();
+    }
+}
 
-        System.out.println("Hello world!");
+class RSAEncryptServlet extends HttpServlet {
+
+    private static final long serialVersionUID = 1L;
+    private BigInteger p;
+    private BigInteger q;
+    private BigInteger n;
+    private BigInteger phi;
+    private BigInteger e;
+    private BigInteger d;
+
+    public RSAEncryptServlet() {
+        Random rnd = new Random();
+        int bitLength = 512;
+        p = BigInteger.probablePrime(bitLength, rnd);
+        q = BigInteger.probablePrime(bitLength, rnd);
+        n = p.multiply(q);
+        phi = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
+        e = BigInteger.probablePrime(bitLength/2, rnd);
+        while (phi.gcd(e).compareTo(BigInteger.ONE) > 0 && e.compareTo(phi) < 0) {
+            e.add(BigInteger.ONE);
+        }
+        d = e.modInverse(phi);
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+        out.println("<html>");
+        out.println("<head>");
+        out.println("<title>RSA Encryption</title>");
+        out.println("</head>");
+        out.println("<body>");
+        out.println("<h1>RSA Encryption</h1>");
+        out.println("<form method=\"POST\">");
+        out.println("<label for=\"message\">Message:</label>");
+        out.println("<input type=\"text\" id=\"message\" name=\"message\"><br>");
+        out.println("<input type=\"submit\" value=\"Encrypt\">");
+        out.println("</form>");
+        out.println("</body>");
+        out.println("</html>");
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+        out.println("<html>");
+        out.println("<head>");
+        out.println("<title>RSA Encryption</title>");
+        out.println("</head>");
+        out.println("<body>");
+        out.println("<h1>RSA Encryption</h1>");
+
+        String message = request.getParameter("message");
+        if (message == null || message.isEmpty()) {
+            out.println("<p>Please enter a message.</p>");
+        } else {
+            byte[] encrypted = encrypt(message.getBytes());
+            out.println("<p>Encrypted message: " + new String(encrypted) + "</p>");
+        }
+
+        out.println("<form method=\"GET\" action=\"/encrypt\">");
+        out.println("<input type=\"submit\" value=\"Back\">");
+        out.println("</form>");
+        out.println("</body>");
+        out.println("</html>");
+    }
+
+    private byte[] encrypt(byte[] message) {
+        BigInteger m = new BigInteger(message);
+        BigInteger c = m.modPow(e, n);
+        return c.toByteArray();
     }
 }

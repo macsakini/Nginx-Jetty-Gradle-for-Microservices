@@ -15,10 +15,8 @@ allprojects {
         implementation 'org.json:json:20220924'
         implementation 'org.eclipse.jetty:jetty-http:11.0.14'
         implementation 'org.eclipse.jetty.http2:http2-server:11.0.14'
-
-    }
-
-    test {
-        useJUnitPlatform()
+//        implementation 'org.eclipse.jetty.jetty-util:"11.0.14'
+        implementation 'org.eclipse.jetty:jetty-servlet:11.0.14'
     }
 }
+
