@@ -5,7 +5,10 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.util.Random;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -57,21 +60,9 @@ class RSAEncryptServlet extends HttpServlet {
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        out.println("<html>");
-        out.println("<head>");
-        out.println("<title>RSA Encryption</title>");
-        out.println("</head>");
-        out.println("<body>");
-        out.println("<h1>RSA Encryption</h1>");
-        out.println("<form method=\"POST\">");
-        out.println("<label for=\"message\">Message:</label>");
-        out.println("<input type=\"text\" id=\"message\" name=\"message\"><br>");
-        out.println("<input type=\"submit\" value=\"Encrypt\">");
-        out.println("</form>");
-        out.println("</body>");
-        out.println("</html>");
+//        response.setContentType("text/html");
+        RequestDispatcher view = request.getRequestDispatcher("/Users/mac/Documents/nginxjetty/currency/src/main/html/index.html");
+        view.forward(request, response);
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -105,3 +96,7 @@ class RSAEncryptServlet extends HttpServlet {
         return c.toByteArray();
     }
 }
+
+
+
+
